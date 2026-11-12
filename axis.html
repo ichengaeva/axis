@@ -1,0 +1,1352 @@
+<!DOCTYPE html>
+<html lang="ru" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BayesBio & Life Compass — Байесовский навигатор здоровья и жизненных стратегий</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Google Fonts: Inter & JetBrains Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    colors: {
+                        obsidian: '#090d16',
+                        card: '#111827',
+                        border: '#1f2937'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #090d16;
+            color: #f3f4f6;
+            font-family: 'Inter', sans-serif;
+        }
+        .glass-panel {
+            background: rgba(17, 24, 39, 0.78);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        /* Custom Range Sliders */
+        input[type="range"] {
+            -webkit-appearance: none;
+            background: transparent;
+        }
+        input[type="range"]::-webkit-slider-runnable-track {
+            height: 6px;
+            border-radius: 3px;
+            background: #1f2937;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 16px;
+            width: 16px;
+            border-radius: 50%;
+            background: #10b981;
+            margin-top: -5px;
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(16, 185, 129, 0.45);
+            transition: transform 0.15s ease;
+        }
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.15);
+        }
+        .accent-violet::-webkit-slider-thumb {
+            background: #8b5cf6 !important;
+            box-shadow: 0 0 10px rgba(139, 92, 246, 0.45) !important;
+        }
+        .accent-amber::-webkit-slider-thumb {
+            background: #f59e0b !important;
+            box-shadow: 0 0 10px rgba(245, 158, 11, 0.45) !important;
+        }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #090d16; }
+        ::-webkit-scrollbar-thumb { background: #374151; border-radius: 3px; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col antialiased selection:bg-emerald-500/30 selection:text-emerald-200">
+
+    <!-- Header -->
+    <header class="sticky top-0 z-40 glass-panel border-b border-slate-800 px-4 sm:px-6 py-3.5">
+        <div class="max-w-[1600px] mx-auto flex flex-col md:flex-row md:items-center justify-between gap-3">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-violet-600 flex items-center justify-center shadow-lg shadow-emerald-500/20 shrink-0">
+                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+                    </svg>
+                </div>
+                <div>
+                    <div class="flex items-center gap-2 flex-wrap">
+                        <h1 class="text-base sm:text-lg font-bold tracking-tight text-white">BayesBio & Life Compass</h1>
+                        <span class="text-[11px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">Continuous Bayesian Model</span>
+                    </div>
+                    <p class="text-xs text-slate-400">Байесовский навигатор здоровья, хронобиологии, среды и жизненных стратегий</p>
+                </div>
+            </div>
+
+            <!-- Presets & Actions -->
+            <div class="flex items-center flex-wrap gap-2">
+                <span class="text-[11px] text-slate-400 font-mono hidden xl:inline">Сценарии:</span>
+                <button onclick="applyPreset('murmansk_stress')" class="px-2.5 py-1.5 text-xs font-medium rounded-lg bg-amber-500/15 text-amber-300 border border-amber-500/30 hover:bg-amber-500/25 transition">
+                    ❄️ Северный мегаполис / Стресс
+                </button>
+                <button onclick="applyPreset('optimal_balance')" class="px-2.5 py-1.5 text-xs font-medium rounded-lg bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-500/25 transition">
+                    🌿 Оптимальный баланс
+                </button>
+                <button onclick="applyPreset('reset_21')" class="px-2.5 py-1.5 text-xs font-medium rounded-lg bg-violet-500/15 text-violet-300 border border-violet-500/30 hover:bg-violet-500/25 transition">
+                    🚀 Перезагрузка 21 день
+                </button>
+                <button onclick="window.print()" class="px-2.5 py-1.5 text-xs font-medium rounded-lg bg-slate-800 text-slate-300 border border-slate-700 hover:bg-slate-700 transition">
+                    🖨️ Печать / PDF
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="max-w-[1600px] w-full mx-auto flex-1 p-4 sm:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+        <!-- LEFT COLUMN: INPUT PARAMETERS (5 cols on lg) -->
+        <div class="lg:col-span-5 space-y-4">
+            
+            <!-- Navigation Pills for Input Sections -->
+            <div class="glass-panel rounded-2xl p-2 grid grid-cols-5 gap-1 text-center">
+                <button onclick="showInputTab(1)" id="inTab1" class="py-2 px-1 rounded-xl text-[11px] sm:text-xs font-semibold bg-emerald-600 text-white transition">1. Тело/Астро</button>
+                <button onclick="showInputTab(2)" id="inTab2" class="py-2 px-1 rounded-xl text-[11px] sm:text-xs font-medium text-slate-400 hover:text-white transition">2. Среда/Свет</button>
+                <button onclick="showInputTab(3)" id="inTab3" class="py-2 px-1 rounded-xl text-[11px] sm:text-xs font-medium text-slate-400 hover:text-white transition">3. Рацион/Сон</button>
+                <button onclick="showInputTab(4)" id="inTab4" class="py-2 px-1 rounded-xl text-[11px] sm:text-xs font-medium text-slate-400 hover:text-white transition">4. Социум/Дети</button>
+                <button onclick="showInputTab(5)" id="inTab5" class="py-2 px-1 rounded-xl text-[11px] sm:text-xs font-medium text-slate-400 hover:text-white transition">5. Анализы</button>
+            </div>
+
+            <!-- SECTION 1: ANTHROPOMETRY & NATAL PROFILE -->
+            <section id="sec1" class="glass-panel rounded-2xl p-5 space-y-4">
+                <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                    <h2 class="text-sm font-bold text-emerald-400 uppercase tracking-wider font-mono">1. Антропометрия и Натальный вектор</h2>
+                    <span class="text-xs font-mono text-slate-400" id="calcAgeBadge">Возраст: 34 г.</span>
+                </div>
+
+                <!-- Gender Selector -->
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs text-slate-400 mb-1">Биологический пол</label>
+                        <div class="grid grid-cols-2 gap-1.5 bg-slate-950 p-1 rounded-xl border border-slate-800">
+                            <button type="button" id="btnFemale" onclick="setGender('F')" class="py-1.5 text-xs font-semibold rounded-lg bg-violet-600 text-white transition">Женский (F)</button>
+                            <button type="button" id="btnMale" onclick="setGender('M')" class="py-1.5 text-xs font-medium rounded-lg text-slate-400 hover:text-white transition">Мужской (M)</button>
+                        </div>
+                    </div>
+                    <!-- Gender-specific hormonal / functional indicator -->
+                    <div id="femaleHormoneBlock">
+                        <label class="block text-xs text-slate-400 mb-1">Менструальный цикл</label>
+                        <select id="cycleStatus" onchange="recalculateAll()" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200 focus:border-violet-500 outline-none">
+                            <option value="regular">Регулярный (24–35 дней)</option>
+                            <option value="irregular">Нерегулярный / ПМС / Сбои</option>
+                            <option value="menopause">Перименопауза / Менопауза</option>
+                        </select>
+                    </div>
+                    <div id="maleHormoneBlock" class="hidden">
+                        <label class="block text-xs text-slate-400 mb-1">Эректильная функция / Тонус</label>
+                        <select id="erectionStatus" onchange="recalculateAll()" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200 focus:border-violet-500 outline-none">
+                            <option value="normal">Норма / Стабильный утренний тонус</option>
+                            <option value="mild_drop">Периодическое снижение на фоне стресса</option>
+                            <option value="issues">Выраженное снижение либидо / эрекции</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Birth Date, Time & Place -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-slate-950/60 p-3.5 rounded-xl border border-slate-800/80">
+                    <div>
+                        <label class="block text-[11px] text-slate-400 mb-1">Дата рождения</label>
+                        <input type="date" id="birthDate" value="1992-05-18" onchange="recalculateAll()" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white font-mono">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] text-slate-400 mb-1">Время рождения</label>
+                        <input type="time" id="birthTime" value="08:45" onchange="recalculateAll()" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white font-mono">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] text-slate-400 mb-1">Место рождения</label>
+                        <input type="text" id="birthPlace" value="Сынжерей / Кишинёв" oninput="recalculateAll()" placeholder="Город рождения" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white">
+                    </div>
+                    <div class="sm:col-span-3 flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-800/80 text-xs">
+                        <span class="text-slate-400">Натальный профиль:</span>
+                        <span id="natalSummaryText" class="font-mono text-violet-300 font-medium">♉ Телец • Стихия Земли • Асц/Вектор: Венера-Меркурий</span>
+                    </div>
+                </div>
+
+                <!-- Height & Weight Sliders -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="bg-slate-950/60 p-3 rounded-xl border border-slate-800/80">
+                        <div class="flex justify-between text-xs mb-1.5">
+                            <span class="text-slate-300">Рост</span>
+                            <span id="heightVal" class="font-mono text-emerald-400 font-semibold">168 см</span>
+                        </div>
+                        <input type="range" id="heightSlider" min="145" max="205" value="168" oninput="recalculateAll()" class="w-full">
+                    </div>
+                    <div class="bg-slate-950/60 p-3 rounded-xl border border-slate-800/80">
+                        <div class="flex justify-between text-xs mb-1.5">
+                            <span class="text-slate-300">Вес</span>
+                            <span id="weightVal" class="font-mono text-emerald-400 font-semibold">66 кг</span>
+                        </div>
+                        <input type="range" id="weightSlider" min="42" max="145" value="66" oninput="recalculateAll()" class="w-full">
+                    </div>
+                </div>
+
+                <!-- Live BMI & Interpretation Box -->
+                <div class="bg-gradient-to-r from-slate-900 to-slate-950 p-3.5 rounded-xl border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div>
+                        <span class="text-[11px] text-slate-400 uppercase font-mono block">Индекс массы тела (BMI) & BMR</span>
+                        <div class="flex items-baseline gap-2 mt-0.5">
+                            <span id="bmiValue" class="text-xl font-bold font-mono text-white">23.4</span>
+                            <span id="bmiCategory" class="text-xs px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-300 font-medium">Оптимальный диапазон</span>
+                        </div>
+                        <p id="bmiInterpretation" class="text-[11px] text-slate-400 mt-1">Непрерывная оценка: минимальный метаболический риск.</p>
+                    </div>
+                    <div class="sm:text-right shrink-0">
+                        <label class="block text-[11px] text-slate-400 mb-1">Цель по композиции тела</label>
+                        <select id="weightGoal" onchange="recalculateAll()" class="bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-emerald-300 font-medium outline-none">
+                            <option value="lose">Снизить вес (-15% ккал)</option>
+                            <option value="maintain" selected>Удержать текущий вес</option>
+                            <option value="gain">Набрать мышечную массу (+12% ккал)</option>
+                        </select>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECTION 2: GEOGRAPHY, CLIMATE, DAYLIGHT & ECOLOGY -->
+            <section id="sec2" class="glass-panel rounded-2xl p-5 space-y-4 hidden">
+                <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                    <h2 class="text-sm font-bold text-amber-400 uppercase tracking-wider font-mono">2. Климат, Световой день и Экология</h2>
+                    <span class="text-xs font-mono text-slate-400">Хронобиология</span>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs text-slate-400 mb-1">Текущая дата оценки</label>
+                        <input type="date" id="currentDate" onchange="recalculateAll()" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white font-mono">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-slate-400 mb-1">Текущий город проживания</label>
+                        <select id="citySelect" onchange="onCityChange()" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-amber-500">
+                            <option value="murmansk">Мурманск (68.97° с.ш. — Заполярье)</option>
+                            <option value="spb">Санкт-Петербург (59.93° с.ш.)</option>
+                            <option value="moscow" selected>Москва (55.75° с.ш.)</option>
+                            <option value="norilsk">Норильск (69.35° с.ш. — Высокий AQI)</option>
+                            <option value="ekb">Екатеринбург (56.83° с.ш.)</option>
+                            <option value="sochi">Сочи (43.58° с.ш. — Субтропики)</option>
+                            <option value="almaty">Алматы (43.23° с.ш. — Предгорье)</option>
+                            <option value="bucharest">Бухарест / Кишинёв (44.4°–47.0° с.ш.)</option>
+                            <option value="limassol">Лимасол, Кипр (34.67° с.ш. — Средиземноморье)</option>
+                            <option value="tenerife">Тенерифе / Аликанте (28°–38° с.ш.)</option>
+                            <option value="custom">Другой город (настроить широту вручную)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Latitude & Ecology Sliders -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="bg-slate-950/60 p-3 rounded-xl border border-slate-800/80">
+                        <div class="flex justify-between text-xs mb-1.5">
+                            <span class="text-slate-300">Географическая широта</span>
+                            <span id="latVal" class="font-mono text-amber-400 font-semibold">55.8° с.ш.</span>
+                        </div>
+                        <input type="range" id="latSlider" min="15" max="72" step="0.5" value="55.8" oninput="recalculateAll()" class="w-full accent-amber">
+                    </div>
+                    <div class="bg-slate-950/60 p-3 rounded-xl border border-slate-800/80">
+                        <div class="flex justify-between text-xs mb-1.5">
+                            <span class="text-slate-300">Индекс загрязнения (AQI)</span>
+                            <span id="aqiVal" class="font-mono text-amber-400 font-semibold">45 (Умеренный)</span>
+                        </div>
+                        <input type="range" id="aqiSlider" min="10" max="200" step="5" value="45" oninput="recalculateAll()" class="w-full accent-amber">
+                    </div>
+                </div>
+
+                <!-- Calculated Geo-Chronobiology Card -->
+                <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-2.5 text-xs">
+                    <div class="grid grid-cols-3 gap-2 text-center pb-2 border-b border-slate-800">
+                        <div>
+                            <span class="text-[10px] text-slate-400 block font-mono">СВЕТОВОЙ ДЕНЬ</span>
+                            <strong id="daylightDuration" class="text-sm text-amber-300 font-mono">8 ч 14 мин</strong>
+                        </div>
+                        <div>
+                            <span class="text-[10px] text-slate-400 block font-mono">ЧАСОВОЙ ПОЯС</span>
+                            <strong id="timezoneDisplay" class="text-sm text-slate-200 font-mono">UTC+3</strong>
+                        </div>
+                        <div>
+                            <span class="text-[10px] text-slate-400 block font-mono">УФ / СИНТЕЗ VIT D</span>
+                            <strong id="uvSynthesizeStatus" class="text-sm text-rose-400 font-mono">Низкий (Дефицит)</strong>
+                        </div>
+                    </div>
+                    <p id="climateInsightText" class="text-slate-300 leading-relaxed">
+                        Анализ широты и даты: умеренное сокращение светового дня требует контроля уровня 25(OH)D и утренней световой гигиены.
+                    </p>
+                </div>
+            </section>
+
+            <!-- SECTION 3: NUTRITION, SLEEP & TRAINING -->
+            <section id="sec3" class="glass-panel rounded-2xl p-5 space-y-4 hidden">
+                <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                    <h2 class="text-sm font-bold text-emerald-400 uppercase tracking-wider font-mono">3. Сон, Нутрициология и Нагрузки</h2>
+                    <span class="text-xs font-mono text-slate-400" id="actualKcalBadge">Факт: 1950 ккал</span>
+                </div>
+
+                <!-- Sleep & Meals -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="bg-slate-950/60 p-3 rounded-xl border border-slate-800/80">
+                        <div class="flex justify-between text-xs mb-1.5">
+                            <span class="text-slate-300">Сон в сутки</span>
+                            <span id="sleepVal" class="font-mono text-emerald-400 font-semibold">7.0 ч</span>
+                        </div>
+                        <input type="range" id="sleepSlider" min="4.0" max="10.5" step="0.5" value="7.0" oninput="recalculateAll()" class="w-full">
+                    </div>
+                    <div class="bg-slate-950/60 p-3 rounded-xl border border-slate-800/80">
+                        <div class="flex justify-between text-xs mb-1.5">
+                            <span class="text-slate-300">Приемов пищи в день</span>
+                            <span id="mealsVal" class="font-mono text-emerald-400 font-semibold">3 раза</span>
+                        </div>
+                        <input type="range" id="mealsSlider" min="1" max="6" step="1" value="3" oninput="recalculateAll()" class="w-full">
+                    </div>
+                </div>
+
+                <!-- Food Grams Sliders -->
+                <div class="space-y-3 bg-slate-950/60 p-3.5 rounded-xl border border-slate-800/80">
+                    <span class="text-[11px] font-mono uppercase text-slate-400 block">Ежедневный рацион (в граммах готового продукта)</span>
+                    <div>
+                        <div class="flex justify-between text-xs mb-1">
+                            <span class="text-slate-300">Белок (мясо / рыба / птица / яйца / тофу)</span>
+                            <span id="proteinFoodVal" class="font-mono text-emerald-400 font-semibold">250 г (~55г чистого белка)</span>
+                        </div>
+                        <input type="range" id="proteinFoodSlider" min="0" max="600" step="25" value="250" oninput="recalculateAll()" class="w-full">
+                    </div>
+                    <div>
+                        <div class="flex justify-between text-xs mb-1">
+                            <span class="text-slate-300">Сложные углеводы (крупы / цельнозерновые / бобовые)</span>
+                            <span id="carbsFoodVal" class="font-mono text-emerald-400 font-semibold">220 г</span>
+                        </div>
+                        <input type="range" id="carbsFoodSlider" min="0" max="600" step="20" value="220" oninput="recalculateAll()" class="w-full">
+                    </div>
+                    <div>
+                        <div class="flex justify-between text-xs mb-1">
+                            <span class="text-slate-300">Овощи, зелень и несладкие ягоды</span>
+                            <span id="veggiesFoodVal" class="font-mono text-emerald-400 font-semibold">300 г</span>
+                        </div>
+                        <input type="range" id="veggiesFoodSlider" min="0" max="800" step="25" value="300" oninput="recalculateAll()" class="w-full">
+                    </div>
+                </div>
+
+                <!-- Training Frequency & Type -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div class="bg-slate-950/60 p-3 rounded-xl border border-slate-800/80">
+                        <div class="flex justify-between text-xs mb-1.5">
+                            <span class="text-slate-300">Тренировок в неделю</span>
+                            <span id="workoutsVal" class="font-mono text-emerald-400 font-semibold">3 раза</span>
+                        </div>
+                        <input type="range" id="workoutsSlider" min="0" max="7" step="1" value="3" oninput="recalculateAll()" class="w-full">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-slate-400 mb-1">Основной тип активности</label>
+                        <select id="workoutType" onchange="recalculateAll()" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white outline-none">
+                            <option value="strength">Силовые тренировки (зал / веса)</option>
+                            <option value="mixed" selected>Смешанные (силовые + кардио)</option>
+                            <option value="cardio">Интенсивное кардио / Бег / HIIT</option>
+                            <option value="mindbody">Йога / Пилатес / Растяжка / Плавание</option>
+                            <option value="walking">Только бытовая ходьба</option>
+                        </select>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECTION 4: SOCIAL, FINANCE, RELATIONSHIPS & CHILDREN -->
+            <section id="sec4" class="glass-panel rounded-2xl p-5 space-y-4 hidden">
+                <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                    <h2 class="text-sm font-bold text-violet-400 uppercase tracking-wider font-mono">4. Финансы, Отношения и Дети</h2>
+                    <span class="text-xs font-mono text-slate-400">Психосоциальная нагрузка</span>
+                </div>
+
+                <!-- Education & Work Domain -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs text-slate-400 mb-1">Образование</label>
+                        <select id="educationLevel" onchange="recalculateAll()" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white outline-none">
+                            <option value="secondary">Среднее / Среднее специальное</option>
+                            <option value="higher" selected>Высшее образование</option>
+                            <option value="multi">Несколько высших / MBA</option>
+                            <option value="phd">Ученая степень (PhD / К.м.н.)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs text-slate-400 mb-1">Сфера деятельности</label>
+                        <select id="workSphere" onchange="recalculateAll()" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white outline-none">
+                            <option value="pharma_med" selected>Медицина / Фарма / Биотех</option>
+                            <option value="it_data">IT / Аналитика / Data Science</option>
+                            <option value="business">Бизнес / Финансы / Продажи</option>
+                            <option value="science_edu">Наука / Образование</option>
+                            <option value="creative">Творчество / Медиа</option>
+                            <option value="other">Другая сфера / В поиске</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Income vs Desired Income -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="bg-slate-950/60 p-3 rounded-xl border border-slate-800/80">
+                        <div class="flex justify-between text-xs mb-1.5">
+                            <span class="text-slate-300">Текущий доход (у.е./мес)</span>
+                            <span id="currIncomeVal" class="font-mono text-violet-400 font-semibold">2 500</span>
+                        </div>
+                        <input type="range" id="currIncomeSlider" min="300" max="15000" step="100" value="2500" oninput="recalculateAll()" class="w-full accent-violet">
+                    </div>
+                    <div class="bg-slate-950/60 p-3 rounded-xl border border-slate-800/80">
+                        <div class="flex justify-between text-xs mb-1.5">
+                            <span class="text-slate-300">Желаемый доход (у.е./мес)</span>
+                            <span id="desIncomeVal" class="font-mono text-violet-400 font-semibold">4 500</span>
+                        </div>
+                        <input type="range" id="desIncomeSlider" min="500" max="20000" step="200" value="4500" oninput="recalculateAll()" class="w-full accent-violet">
+                    </div>
+                </div>
+
+                <!-- Relationship & Satisfaction & Intimacy -->
+                <div class="bg-slate-950/60 p-3.5 rounded-xl border border-slate-800/80 space-y-3">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs text-slate-400 mb-1">Статус отношений</label>
+                            <select id="partnerStatus" onchange="recalculateAll()" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white outline-none">
+                                <option value="partner" selected>Есть постоянный партнер / Брак</option>
+                                <option value="dating">В поиске / Свидания</option>
+                                <option value="solo">Осознанное одиночество</option>
+                            </select>
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-xs mb-1">
+                                <span class="text-slate-300">Регулярность секса (раз/мес)</span>
+                                <span id="sexFreqVal" class="font-mono text-violet-400 font-semibold">6 раз/мес</span>
+                            </div>
+                            <input type="range" id="sexFreqSlider" min="0" max="25" step="1" value="6" oninput="recalculateAll()" class="w-full accent-violet">
+                        </div>
+                    </div>
+                    <div>
+                        <div class="flex justify-between text-xs mb-1">
+                            <span class="text-slate-300">Эмоциональное удовлетворение от отношений / статуса (1–10)</span>
+                            <span id="relSatVal" class="font-mono text-violet-400 font-semibold">7 / 10</span>
+                        </div>
+                        <input type="range" id="relSatSlider" min="1" max="10" step="1" value="7" oninput="recalculateAll()" class="w-full accent-violet">
+                    </div>
+                </div>
+
+                <!-- Children Count & Age Profile -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-slate-950/60 p-3.5 rounded-xl border border-slate-800/80">
+                    <div>
+                        <div class="flex justify-between text-xs mb-1.5">
+                            <span class="text-slate-300">Количество детей</span>
+                            <span id="kidsCountVal" class="font-mono text-violet-400 font-semibold">1 ребенок</span>
+                        </div>
+                        <input type="range" id="kidsCountSlider" min="0" max="5" step="1" value="1" oninput="recalculateAll()" class="w-full accent-violet">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-slate-400 mb-1">Возрастная категория детей</label>
+                        <select id="kidsAgeGroup" onchange="recalculateAll()" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white outline-none">
+                            <option value="none">Нет детей</option>
+                            <option value="toddler">Малыши 0–3 лет (дефицит сна, физический ресурс)</option>
+                            <option value="preschool">Дошкольники 4–6 лет</option>
+                            <option value="school" selected>Школьники 7–12 лет (кружки, уроки)</option>
+                            <option value="teen">Подростки 13–18 лет (экзамены, поступление, конфликты)</option>
+                            <option value="adult">Взрослые дети (18+)</option>
+                        </select>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECTION 5: LAB DIAGNOSTICS -->
+            <section id="sec5" class="glass-panel rounded-2xl p-5 space-y-4 hidden">
+                <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                    <h2 class="text-sm font-bold text-sky-400 uppercase tracking-wider font-mono">5. Лабораторные анализы (Опционально)</h2>
+                    <span class="text-xs font-mono text-slate-400">Байесовское обновление</span>
+                </div>
+                <p class="text-xs text-slate-400">Если анализы не сдавались, отметьте «Не сдавал(а)» — модель вычислит апостериорную вероятность дефицита на основе климата, рациона и симптомов.</p>
+
+                <div class="space-y-3">
+                    <!-- Vitamin D -->
+                    <div class="bg-slate-950/60 p-3 rounded-xl border border-slate-800 flex flex-col gap-2">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-medium text-slate-200">Витамин D (25-OH), нг/мл</span>
+                            <label class="flex items-center gap-1.5 text-[11px] text-slate-400 cursor-pointer">
+                                <input type="checkbox" id="vitDUnknown" checked onchange="recalculateAll()" class="rounded bg-slate-800 border-slate-700 text-emerald-500">
+                                Не сдавал(а)
+                            </label>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <input type="range" id="vitDSlider" min="8" max="100" value="24" oninput="document.getElementById('vitDUnknown').checked=false; recalculateAll();" class="w-full">
+                            <span id="vitDVal" class="font-mono text-xs text-sky-400 w-16 text-right">24 нг/мл</span>
+                        </div>
+                    </div>
+
+                    <!-- Ferritin -->
+                    <div class="bg-slate-950/60 p-3 rounded-xl border border-slate-800 flex flex-col gap-2">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-medium text-slate-200">Ферритин (запасы железа), мкг/л</span>
+                            <label class="flex items-center gap-1.5 text-[11px] text-slate-400 cursor-pointer">
+                                <input type="checkbox" id="ferritinUnknown" checked onchange="recalculateAll()" class="rounded bg-slate-800 border-slate-700 text-emerald-500">
+                                Не сдавал(а)
+                            </label>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <input type="range" id="ferritinSlider" min="5" max="250" value="32" oninput="document.getElementById('ferritinUnknown').checked=false; recalculateAll();" class="w-full">
+                            <span id="ferritinVal" class="font-mono text-xs text-sky-400 w-16 text-right">32 мкг/л</span>
+                        </div>
+                    </div>
+
+                    <!-- TSH -->
+                    <div class="bg-slate-950/60 p-3 rounded-xl border border-slate-800 flex flex-col gap-2">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-medium text-slate-200">ТТГ (щитовидная железа), мМЕ/л</span>
+                            <label class="flex items-center gap-1.5 text-[11px] text-slate-400 cursor-pointer">
+                                <input type="checkbox" id="tshUnknown" checked onchange="recalculateAll()" class="rounded bg-slate-800 border-slate-700 text-emerald-500">
+                                Не сдавал(а)
+                            </label>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <input type="range" id="tshSlider" min="0.2" max="8.0" step="0.1" value="2.1" oninput="document.getElementById('tshUnknown').checked=false; recalculateAll();" class="w-full">
+                            <span id="tshVal" class="font-mono text-xs text-sky-400 w-16 text-right">2.1 мМЕ/л</span>
+                        </div>
+                    </div>
+
+                    <!-- Glucose -->
+                    <div class="bg-slate-950/60 p-3 rounded-xl border border-slate-800 flex flex-col gap-2">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-medium text-slate-200">Глюкоза натощак, ммоль/л</span>
+                            <label class="flex items-center gap-1.5 text-[11px] text-slate-400 cursor-pointer">
+                                <input type="checkbox" id="glucUnknown" checked onchange="recalculateAll()" class="rounded bg-slate-800 border-slate-700 text-emerald-500">
+                                Не сдавал(а)
+                            </label>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <input type="range" id="glucSlider" min="3.5" max="8.5" step="0.1" value="5.1" oninput="document.getElementById('glucUnknown').checked=false; recalculateAll();" class="w-full">
+                            <span id="glucVal" class="font-mono text-xs text-sky-400 w-16 text-right">5.1 ммоль/л</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Quick Summary Card under Controls -->
+            <div class="glass-panel rounded-2xl p-4 border-l-4 border-emerald-500 space-y-2">
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-bold text-white uppercase font-mono">Суточная норма под вашу цель</span>
+                    <span id="targetKcalDisplay" class="text-sm font-bold font-mono text-emerald-400">1 890 ккал</span>
+                </div>
+                <div class="grid grid-cols-3 gap-2 text-center bg-slate-950/70 p-2 rounded-xl text-xs font-mono">
+                    <div>
+                        <span class="text-[10px] text-slate-400 block">БЕЛКИ</span>
+                        <span id="macroProtein" class="text-slate-200 font-semibold">105 г</span>
+                    </div>
+                    <div>
+                        <span class="text-[10px] text-slate-400 block">ЖИРЫ</span>
+                        <span id="macroFat" class="text-slate-200 font-semibold">62 г</span>
+                    </div>
+                    <div>
+                        <span class="text-[10px] text-slate-400 block">УГЛЕВОДЫ</span>
+                        <span id="macroCarbs" class="text-slate-200 font-semibold">215 г</span>
+                    </div>
+                </div>
+                <p id="nutritionGapText" class="text-[11px] text-slate-400">Баланс рациона: проверьте достаточность клетчатки и чистого белка.</p>
+            </div>
+
+        </div>
+
+        <!-- RIGHT COLUMN: BAYESIAN ANALYTICS & QUINTESSENCE REPORT (7 cols on lg) -->
+        <div class="lg:col-span-7 space-y-5">
+
+            <!-- 4 KPI Cards -->
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div class="glass-panel rounded-2xl p-3.5 relative overflow-hidden">
+                    <span class="text-[10px] font-mono uppercase text-slate-400 block">Индекс Витальности</span>
+                    <div class="flex items-baseline gap-1.5 mt-1">
+                        <span id="kpiVitality" class="text-2xl font-bold font-mono text-emerald-400">74%</span>
+                    </div>
+                    <span id="kpiVitalityCI" class="text-[10px] font-mono text-slate-400 block mt-0.5">95% ДИ: [67%–81%]</span>
+                </div>
+
+                <div class="glass-panel rounded-2xl p-3.5 relative overflow-hidden">
+                    <span class="text-[10px] font-mono uppercase text-slate-400 block">Аллостаз / Стресс</span>
+                    <div class="flex items-baseline gap-1.5 mt-1">
+                        <span id="kpiStress" class="text-2xl font-bold font-mono text-amber-400">42%</span>
+                    </div>
+                    <span id="kpiStressSub" class="text-[10px] font-mono text-slate-400 block mt-0.5">Умеренная нагрузка</span>
+                </div>
+
+                <div class="glass-panel rounded-2xl p-3.5 relative overflow-hidden">
+                    <span class="text-[10px] font-mono uppercase text-slate-400 block">Циркадный индекс</span>
+                    <div class="flex items-baseline gap-1.5 mt-1">
+                        <span id="kpiCircadian" class="text-2xl font-bold font-mono text-sky-400">68%</span>
+                    </div>
+                    <span id="kpiCircadianSub" class="text-[10px] font-mono text-slate-400 block mt-0.5">Свет + Сон</span>
+                </div>
+
+                <div class="glass-panel rounded-2xl p-3.5 relative overflow-hidden">
+                    <span class="text-[10px] font-mono uppercase text-slate-400 block">Социо-Финанс ресурс</span>
+                    <div class="flex items-baseline gap-1.5 mt-1">
+                        <span id="kpiSocial" class="text-2xl font-bold font-mono text-violet-400">71%</span>
+                    </div>
+                    <span id="kpiSocialSub" class="text-[10px] font-mono text-slate-400 block mt-0.5">Опора и баланс</span>
+                </div>
+            </div>
+
+            <!-- Charts Row -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Radar Chart -->
+                <div class="glass-panel rounded-2xl p-4 flex flex-col">
+                    <div class="flex items-center justify-between mb-2">
+                        <h3 class="text-xs font-bold uppercase font-mono text-slate-200">Холистический Био-Радар</h3>
+                        <span class="text-[10px] font-mono text-emerald-400">Текущий vs Оптимум</span>
+                    </div>
+                    <div class="h-60 relative flex items-center justify-center">
+                        <canvas id="radarChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Bayesian Deficiency Probability Bar Chart -->
+                <div class="glass-panel rounded-2xl p-4 flex flex-col">
+                    <div class="flex items-center justify-between mb-2">
+                        <h3 class="text-xs font-bold uppercase font-mono text-slate-200">Вероятность дефицитов и рисков</h3>
+                        <span class="text-[10px] font-mono text-violet-400">Апостериорная P(%)</span>
+                    </div>
+                    <div class="h-60 relative flex items-center justify-center">
+                        <canvas id="riskChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- QUINTESSENCE: IMMEDIATE VS LONG-TERM & 21-DAY CHECKLIST -->
+            <div class="glass-panel rounded-2xl p-5 space-y-5 border border-emerald-500/20">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800 pb-3">
+                    <div>
+                        <span class="text-[10px] font-mono uppercase tracking-widest text-emerald-400">Квинтэссенция анализа</span>
+                        <h2 class="text-base font-bold text-white">Персональная стратегия и дорожная карта</h2>
+                    </div>
+                    <span class="text-xs font-mono px-2.5 py-1 rounded-lg bg-slate-900 text-slate-300 border border-slate-700" id="overallVerdictBadge">Статус: Хороший потенциал роста</span>
+                </div>
+
+                <!-- Immediate vs Long-term Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Immediate Actions (0-21 days) -->
+                    <div class="bg-rose-950/20 border border-rose-500/30 rounded-xl p-4 space-y-2.5">
+                        <div class="flex items-center gap-2">
+                            <span class="w-2.5 h-2.5 rounded-full bg-rose-500 animate-pulse"></span>
+                            <h3 class="text-xs font-bold uppercase font-mono text-rose-300">Немедленная корректировка (0–21 день)</h3>
+                        </div>
+                        <ul id="immediateActionsList" class="space-y-2 text-xs text-slate-200 leading-relaxed">
+                            <!-- Populated dynamically -->
+                        </ul>
+                    </div>
+
+                    <!-- Long-term Strategy (3-12 months) -->
+                    <div class="bg-indigo-950/20 border border-indigo-500/30 rounded-xl p-4 space-y-2.5">
+                        <div class="flex items-center gap-2">
+                            <span class="w-2.5 h-2.5 rounded-full bg-indigo-400"></span>
+                            <h3 class="text-xs font-bold uppercase font-mono text-indigo-300">В долгострой (3–12 месяцев)</h3>
+                        </div>
+                        <ul id="longTermActionsList" class="space-y-2 text-xs text-slate-200 leading-relaxed">
+                            <!-- Populated dynamically -->
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Interactive 21-Day Action Checklist -->
+                <div class="bg-slate-950/70 rounded-xl p-4 border border-slate-800 space-y-3">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-xs font-bold uppercase font-mono text-emerald-400">Чек-лист фокуса на ближайший 21 день</h3>
+                        <span id="checklistProgress" class="text-xs font-mono text-slate-400">0 / 5 выполнено</span>
+                    </div>
+                    <div id="checklistContainer" class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs">
+                        <!-- Populated dynamically -->
+                    </div>
+                </div>
+
+                <!-- Doctors, Labs & Nutrients + Astro-Relocation Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Medical Check-up & Nutrients -->
+                    <div class="bg-slate-900/80 rounded-xl p-4 border border-slate-800 space-y-2.5">
+                        <h3 class="text-xs font-bold uppercase font-mono text-sky-400">🩺 Врачи, Анализы и Нутрицевтики</h3>
+                        <div id="medicalRecsContainer" class="space-y-2 text-xs text-slate-300 leading-relaxed">
+                            <!-- Populated dynamically -->
+                        </div>
+                    </div>
+
+                    <!-- Astro-Relocation Top 3 Cities -->
+                    <div class="bg-slate-900/80 rounded-xl p-4 border border-slate-800 space-y-2.5">
+                        <h3 class="text-xs font-bold uppercase font-mono text-violet-400">🧭 Топ-3 локации (Биоклимат + Натальный резонанс)</h3>
+                        <div id="relocationRecsContainer" class="space-y-2 text-xs text-slate-300 leading-relaxed">
+                            <!-- Populated dynamically -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Positive Mindset & Motivational Footer -->
+                <div class="bg-gradient-to-r from-emerald-950/40 via-slate-900 to-violet-950/40 rounded-xl p-4 border border-emerald-500/20 flex items-start gap-3">
+                    <div class="text-xl shrink-0">✨</div>
+                    <div class="space-y-1">
+                        <h4 class="text-xs font-bold text-emerald-300 uppercase font-mono">Фокус и позитивный настрой</h4>
+                        <p id="motivationalSummary" class="text-xs text-slate-200 leading-relaxed">
+                            Ваша система обладает высокой адаптивностью. Не нужно менять всё за один понедельник: корректировка всего двух ключевых рычагов (световой режим и белково-овощной баланс) создаст каскадный эффект улучшения энергии и настроения уже через 14–21 день.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <script>
+        // City database with coordinates, timezone, AQI, and climate type
+        const CITIES_DB = {
+            murmansk: { name: 'Мурманск', lat: 68.97, tz: 'UTC+3', aqi: 38, climate: 'subarctic' },
+            spb: { name: 'Санкт-Петербург', lat: 59.93, tz: 'UTC+3', aqi: 52, climate: 'humid_continental' },
+            moscow: { name: 'Москва', lat: 55.75, tz: 'UTC+3', aqi: 58, climate: 'continental' },
+            norilsk: { name: 'Норильск', lat: 69.35, tz: 'UTC+7', aqi: 145, climate: 'subarctic_industrial' },
+            ekb: { name: 'Екатеринбург', lat: 56.83, tz: 'UTC+5', aqi: 65, climate: 'continental' },
+            sochi: { name: 'Сочи', lat: 43.58, tz: 'UTC+3', aqi: 28, climate: 'subtropical' },
+            almaty: { name: 'Алматы', lat: 43.23, tz: 'UTC+5', aqi: 88, climate: 'foothill_continental' },
+            bucharest: { name: 'Бухарест / Кишинёв', lat: 45.7, tz: 'UTC+2', aqi: 48, climate: 'temperate_sunny' },
+            limassol: { name: 'Лимасол (Кипр)', lat: 34.67, tz: 'UTC+2', aqi: 24, climate: 'mediterranean' },
+            tenerife: { name: 'Тенерифе / Аликанте', lat: 33.0, tz: 'UTC+0/+1', aqi: 20, climate: 'atlantic_med' }
+        };
+
+        let gender = 'F';
+        let radarChartInstance = null;
+        let riskChartInstance = null;
+        let completedChecklistItems = new Set();
+
+        function init() {
+            // Set current date to today
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('currentDate').value = today;
+            recalculateAll();
+        }
+
+        function showInputTab(tabNum) {
+            for (let i = 1; i <= 5; i++) {
+                const sec = document.getElementById(`sec${i}`);
+                const btn = document.getElementById(`inTab${i}`);
+                if (i === tabNum) {
+                    sec.classList.remove('hidden');
+                    btn.classList.add('bg-emerald-600', 'text-white', 'font-semibold');
+                    btn.classList.remove('text-slate-400', 'font-medium');
+                } else {
+                    sec.classList.add('hidden');
+                    btn.classList.remove('bg-emerald-600', 'text-white', 'font-semibold');
+                    btn.classList.add('text-slate-400', 'font-medium');
+                }
+            }
+        }
+
+        function setGender(g) {
+            gender = g;
+            const btnF = document.getElementById('btnFemale');
+            const btnM = document.getElementById('btnMale');
+            const fBlock = document.getElementById('femaleHormoneBlock');
+            const mBlock = document.getElementById('maleHormoneBlock');
+
+            if (g === 'F') {
+                btnF.className = 'py-1.5 text-xs font-semibold rounded-lg bg-violet-600 text-white transition';
+                btnM.className = 'py-1.5 text-xs font-medium rounded-lg text-slate-400 hover:text-white transition';
+                fBlock.classList.remove('hidden');
+                mBlock.classList.add('hidden');
+            } else {
+                btnM.className = 'py-1.5 text-xs font-semibold rounded-lg bg-sky-600 text-white transition';
+                btnF.className = 'py-1.5 text-xs font-medium rounded-lg text-slate-400 hover:text-white transition';
+                mBlock.classList.remove('hidden');
+                fBlock.classList.add('hidden');
+            }
+            recalculateAll();
+        }
+
+        function onCityChange() {
+            const key = document.getElementById('citySelect').value;
+            if (CITIES_DB[key]) {
+                document.getElementById('latSlider').value = CITIES_DB[key].lat;
+                document.getElementById('aqiSlider').value = CITIES_DB[key].aqi;
+                document.getElementById('timezoneDisplay').innerText = CITIES_DB[key].tz;
+            }
+            recalculateAll();
+        }
+
+        function applyPreset(presetName) {
+            completedChecklistItems.clear();
+            if (presetName === 'murmansk_stress') {
+                setGender('F');
+                document.getElementById('birthDate').value = '1990-11-24';
+                document.getElementById('birthTime').value = '21:15';
+                document.getElementById('heightSlider').value = 166;
+                document.getElementById('weightSlider').value = 78;
+                document.getElementById('weightGoal').value = 'lose';
+                document.getElementById('citySelect').value = 'murmansk';
+                onCityChange();
+                document.getElementById('sleepSlider').value = 5.5;
+                document.getElementById('mealsSlider').value = 2;
+                document.getElementById('proteinFoodSlider').value = 150;
+                document.getElementById('carbsFoodSlider').value = 340;
+                document.getElementById('veggiesFoodSlider').value = 120;
+                document.getElementById('workoutsSlider').value = 1;
+                document.getElementById('currIncomeSlider').value = 1800;
+                document.getElementById('desIncomeSlider').value = 4500;
+                document.getElementById('partnerStatus').value = 'solo';
+                document.getElementById('relSatSlider').value = 4;
+                document.getElementById('sexFreqSlider').value = 1;
+                document.getElementById('kidsCountSlider').value = 1;
+                document.getElementById('kidsAgeGroup').value = 'teen';
+                document.getElementById('vitDUnknown').checked = true;
+            } else if (presetName === 'optimal_balance') {
+                setGender('F');
+                document.getElementById('heightSlider').value = 170;
+                document.getElementById('weightSlider').value = 61;
+                document.getElementById('weightGoal').value = 'maintain';
+                document.getElementById('citySelect').value = 'limassol';
+                onCityChange();
+                document.getElementById('sleepSlider').value = 8.0;
+                document.getElementById('mealsSlider').value = 3;
+                document.getElementById('proteinFoodSlider').value = 350;
+                document.getElementById('carbsFoodSlider').value = 200;
+                document.getElementById('veggiesFoodSlider').value = 450;
+                document.getElementById('workoutsSlider').value = 4;
+                document.getElementById('workoutType').value = 'mixed';
+                document.getElementById('currIncomeSlider').value = 5200;
+                document.getElementById('desIncomeSlider').value = 6000;
+                document.getElementById('partnerStatus').value = 'partner';
+                document.getElementById('relSatSlider').value = 9;
+                document.getElementById('sexFreqSlider').value = 10;
+                document.getElementById('kidsCountSlider').value = 1;
+                document.getElementById('kidsAgeGroup').value = 'school';
+                document.getElementById('vitDUnknown').checked = false;
+                document.getElementById('vitDSlider').value = 54;
+            } else if (presetName === 'reset_21') {
+                setGender('M');
+                document.getElementById('heightSlider').value = 180;
+                document.getElementById('weightSlider').value = 94;
+                document.getElementById('weightGoal').value = 'lose';
+                document.getElementById('citySelect').value = 'moscow';
+                onCityChange();
+                document.getElementById('sleepSlider').value = 6.0;
+                document.getElementById('mealsSlider').value = 2;
+                document.getElementById('proteinFoodSlider').value = 220;
+                document.getElementById('carbsFoodSlider').value = 320;
+                document.getElementById('veggiesFoodSlider').value = 150;
+                document.getElementById('workoutsSlider').value = 1;
+                document.getElementById('currIncomeSlider').value = 3000;
+                document.getElementById('desIncomeSlider').value = 5000;
+                document.getElementById('partnerStatus').value = 'partner';
+                document.getElementById('relSatSlider').value = 6;
+                document.getElementById('sexFreqSlider').value = 3;
+                document.getElementById('kidsCountSlider').value = 2;
+                document.getElementById('kidsAgeGroup').value = 'toddler';
+                document.getElementById('erectionStatus').value = 'mild_drop';
+            }
+            recalculateAll();
+        }
+
+        function getZodiacAndAstro(birthDateStr, birthTimeStr) {
+            if (!birthDateStr) return { sign: 'Телец', element: 'Земля', vector: 'Венера-Меркурий' };
+            const d = new Date(birthDateStr);
+            const m = d.getMonth() + 1;
+            const day = d.getDate();
+            let sign = '', element = '', vector = '';
+
+            if ((m === 3 && day >= 21) || (m === 4 && day <= 19)) { sign = '♈ Овен'; element = 'Огонь'; vector = 'Марс-Солнце'; }
+            else if ((m === 4 && day >= 20) || (m === 5 && day <= 20)) { sign = '♉ Телец'; element = 'Земля'; vector = 'Венера-Луна'; }
+            else if ((m === 5 && day >= 21) || (m === 6 && day <= 20)) { sign = '♊ Близнецы'; element = 'Воздух'; vector = 'Меркурий-Уран'; }
+            else if ((m === 6 && day >= 21) || (m === 7 && day <= 22)) { sign = '♋ Рак'; element = 'Вода'; vector = 'Луна-Юпитер'; }
+            else if ((m === 7 && day >= 23) || (m === 8 && day <= 22)) { sign = '♌ Лев'; element = 'Огонь'; vector = 'Солнце-Юпитер'; }
+            else if ((m === 8 && day >= 23) || (m === 9 && day <= 22)) { sign = '♍ Дева'; element = 'Земля'; vector = 'Меркурий-Сатурн'; }
+            else if ((m === 9 && day >= 23) || (m === 10 && day <= 22)) { sign = '♎ Весы'; element = 'Воздух'; vector = 'Венера-Сатурн'; }
+            else if ((m === 10 && day >= 23) || (m === 11 && day <= 21)) { sign = '♏ Скорпион'; element = 'Вода'; vector = 'Плутон-Марс'; }
+            else if ((m === 11 && day >= 22) || (m === 12 && day <= 21)) { sign = '♐ Стрелец'; element = 'Огонь'; vector = 'Юпитер-Солнце'; }
+            else if ((m === 12 && day >= 22) || (m === 1 && day <= 19)) { sign = '♑ Козерог'; element = 'Земля'; vector = 'Сатурн-Марс'; }
+            else if ((m === 1 && day >= 20) || (m === 2 && day <= 18)) { sign = '♒ Водолей'; element = 'Воздух'; vector = 'Уран-Сатурн'; }
+            else { sign = '♓ Рыбы'; element = 'Вода'; vector = 'Нептун-Юпитер'; }
+
+            const hour = birthTimeStr ? parseInt(birthTimeStr.split(':')[0]) : 12;
+            const ascMod = hour >= 6 && hour < 12 ? 'Утренний сектор (10–11 дома: карьера/рост)' :
+                           hour >= 12 && hour < 18 ? 'Дневной сектор (7–9 дома: социум/экспансия)' :
+                           hour >= 18 && hour < 24 ? 'Вечерний сектор (4–6 дома: дом/здоровье)' : 'Ночной сектор (1–3 дома: личный ресурс)';
+
+            return { sign, element, vector, ascMod };
+        }
+
+        function calcDaylightHours(lat, dateStr) {
+            const d = dateStr ? new Date(dateStr) : new Date();
+            const start = new Date(d.getFullYear(), 0, 0);
+            const diff = d - start;
+            const dayOfYear = Math.floor(diff / (1000 * 60 * 60 * 24));
+
+            // Solar declination angle in radians
+            const decl = 0.409 * Math.sin((2 * Math.PI / 365) * (dayOfYear - 81));
+            const latRad = (lat * Math.PI) / 180;
+            let cosOmega = -Math.tan(latRad) * Math.tan(decl);
+
+            if (cosOmega <= -1) return 24.0; // Polar day
+            if (cosOmega >= 1) return 0.0;   // Polar night
+
+            const omega = Math.acos(cosOmega);
+            return (24 / Math.PI) * omega;
+        }
+
+        function recalculateAll() {
+            // 1. Read Anthropometry & Birth
+            const birthDate = document.getElementById('birthDate').value;
+            const birthTime = document.getElementById('birthTime').value;
+            const currDate = document.getElementById('currentDate').value;
+
+            let age = 34;
+            if (birthDate && currDate) {
+                const b = new Date(birthDate);
+                const c = new Date(currDate);
+                age = Math.max(18, Math.floor((c - b) / (365.25 * 24 * 60 * 60 * 1000)));
+            }
+            document.getElementById('calcAgeBadge').innerText = `Возраст: ${age} л.`;
+
+            const astro = getZodiacAndAstro(birthDate, birthTime);
+            document.getElementById('natalSummaryText').innerText = `${astro.sign} • Стихия: ${astro.element} • ${astro.ascMod}`;
+
+            const height = parseFloat(document.getElementById('heightSlider').value);
+            const weight = parseFloat(document.getElementById('weightSlider').value);
+            document.getElementById('heightVal').innerText = `${height} см`;
+            document.getElementById('weightVal').innerText = `${weight} кг`;
+
+            const bmi = weight / Math.pow(height / 100, 2);
+            document.getElementById('bmiValue').innerText = bmi.toFixed(1);
+
+            const bmiCatEl = document.getElementById('bmiCategory');
+            const bmiIntEl = document.getElementById('bmiInterpretation');
+            if (bmi < 18.5) {
+                bmiCatEl.innerText = 'Дефицит массы';
+                bmiCatEl.className = 'text-xs px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 font-medium';
+                bmiIntEl.innerText = 'Непрерывный риск: сниженный резерв мышечной и жировой ткани, важно проверить ферритин и ТТГ.';
+            } else if (bmi < 25.0) {
+                bmiCatEl.innerText = 'Оптимальный диапазон';
+                bmiCatEl.className = 'text-xs px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-300 font-medium';
+                bmiIntEl.innerText = 'Непрерывная оценка: зона минимального кардиометаболического риска.';
+            } else if (bmi < 30.0) {
+                bmiCatEl.innerText = 'Избыточная масса';
+                bmiCatEl.className = 'text-xs px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 font-medium';
+                bmiIntEl.innerText = 'Умеренное повышение нагрузки: мягкий дефицит 12–15% и силовые тренировки дадут лучший отклик.';
+            } else {
+                bmiCatEl.innerText = 'Высокий метаболический риск';
+                bmiCatEl.className = 'text-xs px-2 py-0.5 rounded-md bg-rose-500/20 text-rose-300 font-medium';
+                bmiIntEl.innerText = 'Повышенная нагрузка на сосуды и суставы: фокус на инсулиночувствительность, сон и клетчатку.';
+            }
+
+            // 2. Climate & Daylight
+            const lat = parseFloat(document.getElementById('latSlider').value);
+            const aqi = parseInt(document.getElementById('aqiSlider').value);
+            document.getElementById('latVal').innerText = `${lat.toFixed(1)}° с.ш.`;
+            document.getElementById('aqiVal').innerText = aqi <= 50 ? `${aqi} (Хороший)` : aqi <= 100 ? `${aqi} (Умеренный)` : `${aqi} (Высокое загрязнение)`;
+
+            const daylight = calcDaylightHours(lat, currDate);
+            const dHrs = Math.floor(daylight);
+            const dMins = Math.round((daylight - dHrs) * 60);
+            document.getElementById('daylightDuration').innerText = daylight === 0 ? '0 ч (Полярная ночь)' : `${dHrs} ч ${dMins} мин`;
+
+            const uvEl = document.getElementById('uvSynthesizeStatus');
+            const climateTextEl = document.getElementById('climateInsightText');
+            let climateStressPenalty = 0;
+
+            if (lat >= 60 && daylight < 7) {
+                uvEl.innerText = 'Критический дефицит';
+                uvEl.className = 'text-sm text-rose-400 font-mono';
+                climateStressPenalty = 28;
+                climateTextEl.innerHTML = `<span class="text-amber-300 font-semibold">Высокоширотный циркадный стресс:</span> короткий световой день (${dHrs} ч) провоцирует рост вечернего кортизола, снижение серотонина, тягу к быстрым углеводам и глубокий дефицит витамина D. Обязательны лампа 10 000 люкс утром и Vit D3+K2.`;
+            } else if (daylight < 9.5) {
+                uvEl.innerText = 'Низкий (Нужен Vit D)';
+                uvEl.className = 'text-sm text-amber-400 font-mono';
+                climateStressPenalty = 14;
+                climateTextEl.innerText = `Сезонное сокращение светового дня: эндогенный синтез витамина D через кожу практически остановлен. Требуется профилактическая дозировка D3 и утренние прогулки на дневном свету.`;
+            } else {
+                uvEl.innerText = 'Достаточный';
+                uvEl.className = 'text-sm text-emerald-400 font-mono';
+                climateStressPenalty = 4;
+                climateTextEl.innerText = `Благоприятный световой режим: естественная поддержка выработки мелатонина ночью и серотонина днем.`;
+            }
+
+            if (aqi > 100) {
+                climateStressPenalty += 12;
+                climateTextEl.innerHTML += ` <span class="text-rose-300">Высокий индекс загрязнения воздуха (AQI ${aqi}): повышен оксидативный стресс, добавьте антиоксиданты (NAC / витамин C / крестоцветные).</span>`;
+            }
+
+            // 3. Nutrition, Sleep & Workouts
+            const sleep = parseFloat(document.getElementById('sleepSlider').value);
+            const meals = parseInt(document.getElementById('mealsSlider').value);
+            const protFood = parseInt(document.getElementById('proteinFoodSlider').value);
+            const carbsFood = parseInt(document.getElementById('carbsFoodSlider').value);
+            const veggiesFood = parseInt(document.getElementById('veggiesFoodSlider').value);
+            const workouts = parseInt(document.getElementById('workoutsSlider').value);
+            const workoutType = document.getElementById('workoutType').value;
+            const goal = document.getElementById('weightGoal').value;
+
+            document.getElementById('sleepVal').innerText = `${sleep.toFixed(1)} ч`;
+            document.getElementById('mealsVal').innerText = `${meals} ${meals === 1 ? 'раз' : meals < 5 ? 'раза' : 'раз'}`;
+            const pureProtein = Math.round(protFood * 0.22);
+            document.getElementById('proteinFoodVal').innerText = `${protFood} г (~${pureProtein}г чистого белка)`;
+            document.getElementById('carbsFoodVal').innerText = `${carbsFood} г`;
+            document.getElementById('veggiesFoodVal').innerText = `${veggiesFood} г`;
+            document.getElementById('workoutsVal').innerText = `${workouts} раз/нед`;
+
+            // BMR (Mifflin-St Jeor)
+            const bmr = gender === 'M'
+                ? (10 * weight + 6.25 * height - 5 * age + 5)
+                : (10 * weight + 6.25 * height - 5 * age - 161);
+            const activityMult = 1.2 + (workouts * 0.085);
+            const tdee = bmr * activityMult;
+
+            let targetKcal = Math.round(tdee);
+            if (goal === 'lose') targetKcal = Math.round(tdee * 0.85);
+            if (goal === 'gain') targetKcal = Math.round(tdee * 1.12);
+
+            const targetProtGrams = Math.round(weight * (goal === 'lose' ? 1.7 : goal === 'gain' ? 1.8 : 1.5));
+            const targetFatGrams = Math.round(weight * 0.95);
+            const targetCarbGrams = Math.max(80, Math.round((targetKcal - (targetProtGrams * 4 + targetFatGrams * 9)) / 4));
+
+            document.getElementById('targetKcalDisplay').innerText = `${targetKcal.toLocaleString('ru-RU')} ккал`;
+            document.getElementById('macroProtein').innerText = `${targetProtGrams} г`;
+            document.getElementById('macroFat').innerText = `${targetFatGrams} г`;
+            document.getElementById('macroCarbs').innerText = `${targetCarbGrams} г`;
+
+            // Estimated actual intake (accounting for cooking fats & baseline)
+            const estActualKcal = Math.round((protFood * 1.65) + (carbsFood * 1.35) + (veggiesFood * 0.35) + 380);
+            document.getElementById('actualKcalBadge').innerText = `Факт: ~${estActualKcal} ккал`;
+
+            const protDeficit = targetProtGrams - pureProtein;
+            const fiberDeficit = veggiesFood < 350;
+            let nutGapMsg = '';
+            if (protDeficit > 20) nutGapMsg += `Дефицит белка ~${protDeficit} г/сут (риск потери мышц и тяги к сладкому). `;
+            if (fiberDeficit) nutGapMsg += `Мало овощей (${veggiesFood} г при норме 400+ г для микробиоты). `;
+            if (!nutGapMsg) nutGapMsg = 'Отличный баланс белка и клетчатки для метаболической стабильности!';
+            document.getElementById('nutritionGapText').innerText = nutGapMsg;
+
+            // 4. Social, Finance, Relationships & Kids
+            const currInc = parseInt(document.getElementById('currIncomeSlider').value);
+            const desInc = parseInt(document.getElementById('desIncomeSlider').value);
+            const partnerStatus = document.getElementById('partnerStatus').value;
+            const relSat = parseInt(document.getElementById('relSatSlider').value);
+            const sexFreq = parseInt(document.getElementById('sexFreqSlider').value);
+            const kidsCount = parseInt(document.getElementById('kidsCountSlider').value);
+            const kidsAge = document.getElementById('kidsAgeGroup').value;
+
+            document.getElementById('currIncomeVal').innerText = currInc.toLocaleString('ru-RU');
+            document.getElementById('desIncomeVal').innerText = desInc.toLocaleString('ru-RU');
+            document.getElementById('relSatVal').innerText = `${relSat} / 10`;
+            document.getElementById('sexFreqVal').innerText = `${sexFreq} раз/мес`;
+            document.getElementById('kidsCountVal').innerText = kidsCount === 0 ? 'Нет детей' : kidsCount === 1 ? '1 ребенок' : `${kidsCount} детей`;
+
+            const finRatio = Math.min(1.2, currInc / Math.max(500, desInc));
+            let kidsLoad = 0;
+            if (kidsCount > 0 && kidsAge !== 'none') {
+                const ageWeight = kidsAge === 'toddler' ? 14 : kidsAge === 'teen' ? 15 : kidsAge === 'school' ? 9 : kidsAge === 'preschool' ? 10 : 3;
+                kidsLoad = Math.min(32, ageWeight + (kidsCount - 1) * 5);
+            }
+
+            // 5. Lab Values & Bayesian Posterior Probabilities
+            const vitDUnknown = document.getElementById('vitDUnknown').checked;
+            const vitDVal = parseInt(document.getElementById('vitDSlider').value);
+            document.getElementById('vitDVal').innerText = `${vitDVal} нг/мл`;
+
+            const ferrUnknown = document.getElementById('ferritinUnknown').checked;
+            const ferrVal = parseInt(document.getElementById('ferritinSlider').value);
+            document.getElementById('ferritinVal').innerText = `${ferrVal} мкг/л`;
+
+            const tshUnknown = document.getElementById('tshUnknown').checked;
+            const tshVal = parseFloat(document.getElementById('tshSlider').value);
+            document.getElementById('tshVal').innerText = `${tshVal.toFixed(1)} мМЕ/л`;
+
+            const glucUnknown = document.getElementById('glucUnknown').checked;
+            const glucVal = parseFloat(document.getElementById('glucSlider').value);
+            document.getElementById('glucVal').innerText = `${glucVal.toFixed(1)} ммоль/л`;
+
+            // Posterior Probability of Vitamin D Deficiency
+            let probVitD = 0;
+            if (!vitDUnknown) {
+                probVitD = vitDVal < 20 ? 96 : vitDVal < 30 ? 78 : vitDVal < 45 ? 32 : 8;
+            } else {
+                probVitD = Math.min(95, Math.max(15, Math.round(35 + (lat - 35) * 1.3 + (daylight < 9 ? 18 : 0))));
+            }
+
+            // Posterior Probability of Iron / Ferritin Deficiency
+            let probFerritin = 0;
+            if (!ferrUnknown) {
+                probFerritin = ferrVal < 25 ? 94 : ferrVal < 45 ? 68 : 14;
+            } else {
+                const cycleHeavy = (gender === 'F' && document.getElementById('cycleStatus').value !== 'menopause') ? 24 : 0;
+                const lowMeat = protFood < 180 ? 22 : 6;
+                probFerritin = Math.min(90, 18 + cycleHeavy + lowMeat);
+            }
+
+            // Posterior Probability of Magnesium / B-group depletion
+            const sleepDebt = Math.max(0, 7.5 - sleep);
+            const probMag = Math.min(92, Math.round(25 + sleepDebt * 15 + kidsLoad * 0.8 + (workouts > 4 ? 10 : 0)));
+
+            // Posterior Probability of Circadian / Cortisol Dysregulation
+            const probCircadian = Math.min(95, Math.round(15 + sleepDebt * 16 + climateStressPenalty * 0.9 + (workoutType === 'cardio' && sleep < 6.5 ? 14 : 0)));
+
+            // Posterior Probability of Emotional Burnout
+            const relStress = (10 - relSat) * 4.5;
+            const finStress = Math.max(0, (1 - finRatio) * 35);
+            const probBurnout = Math.min(94, Math.round(10 + relStress + finStress + kidsLoad * 0.85 + sleepDebt * 8));
+
+            // Composite Domain Scores (0–100)
+            const scoreMetabolism = Math.max(25, Math.min(98, Math.round(85 - Math.abs(bmi - 22) * 2.2 - (protDeficit > 20 ? 12 : 0) - (fiberDeficit ? 8 : 0) + (workouts >= 2 && workouts <= 5 ? 8 : 0))));
+            const scoreCircadian = Math.max(20, Math.min(98, Math.round(92 - sleepDebt * 14 - climateStressPenalty * 0.85)));
+            const scoreStress = Math.max(18, Math.min(95, Math.round(100 - probBurnout * 0.85)));
+            const scoreSocial = Math.max(25, Math.min(98, Math.round(relSat * 8.5 + (sexFreq >= 4 ? 10 : 0) - (partnerStatus === 'dating' && relSat < 5 ? 10 : 0))));
+            const scoreFinance = Math.max(25, Math.min(98, Math.round(finRatio * 88 + 8)));
+            const scoreEnvironment = Math.max(20, Math.min(98, Math.round(95 - climateStressPenalty * 1.4 - Math.max(0, (aqi - 40) * 0.25))));
+
+            const vitality = Math.round((scoreMetabolism * 0.22 + scoreCircadian * 0.22 + scoreStress * 0.20 + scoreSocial * 0.14 + scoreFinance * 0.10 + scoreEnvironment * 0.12));
+            const allostaticLoad = Math.min(96, Math.max(12, 100 - Math.round((scoreStress + scoreCircadian + scoreEnvironment) / 3)));
+
+            // Update Top KPI Cards
+            document.getElementById('kpiVitality').innerText = `${vitality}%`;
+            document.getElementById('kpiVitalityCI').innerText = `95% ДИ: [${Math.max(15, vitality - 7)}%–${Math.min(99, vitality + 7)}%]`;
+            document.getElementById('kpiStress').innerText = `${allostaticLoad}%`;
+            document.getElementById('kpiStressSub').innerText = allostaticLoad > 60 ? 'Высокий кортизол-фон' : allostaticLoad > 38 ? 'Умеренная нагрузка' : 'Низкий уровень стресса';
+            document.getElementById('kpiCircadian').innerText = `${scoreCircadian}%`;
+            document.getElementById('kpiSocial').innerText = `${Math.round((scoreSocial + scoreFinance) / 2)}%`;
+
+            // Update Charts
+            renderCharts(
+                [scoreMetabolism, scoreCircadian, scoreStress, scoreSocial, scoreFinance, scoreEnvironment],
+                [probVitD, probFerritin, probMag, probCircadian, probBurnout]
+            );
+
+            // Generate Recommendations & Quintessence
+            generateQuintessence({
+                age, bmi, goal, sleep, workouts, workoutType, protDeficit, fiberDeficit,
+                lat, daylight, aqi, currInc, desInc, partnerStatus, relSat, sexFreq,
+                kidsCount, kidsAge, astro, probVitD, probFerritin, probMag, probCircadian, probBurnout,
+                vitDUnknown, ferrUnknown, tshUnknown, glucUnknown, vitality, allostaticLoad
+            });
+        }
+
+        function renderCharts(radarScores, riskProbs) {
+            const ctxRadar = document.getElementById('radarChart').getContext('2d');
+            if (radarChartInstance) radarChartInstance.destroy();
+
+            radarChartInstance = new Chart(ctxRadar, {
+                type: 'radar',
+                data: {
+                    labels: ['Метаболизм', 'Сон и Свет', 'Антистресс', 'Отношения', 'Финансы', 'Климат/Среда'],
+                    datasets: [
+                        {
+                            label: 'Текущий профиль',
+                            data: radarScores,
+                            backgroundColor: 'rgba(16, 185, 129, 0.22)',
+                            borderColor: '#10b981',
+                            pointBackgroundColor: '#10b981',
+                            borderWidth: 2
+                        },
+                        {
+                            label: 'Целевой оптимум',
+                            data: [85, 85, 85, 85, 85, 85],
+                            backgroundColor: 'rgba(139, 92, 246, 0.06)',
+                            borderColor: 'rgba(139, 92, 246, 0.5)',
+                            borderDash: [4, 4],
+                            pointRadius: 0,
+                            borderWidth: 1.5
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        r: {
+                            min: 0,
+                            max: 100,
+                            ticks: { display: false },
+                            grid: { color: 'rgba(255,255,255,0.08)' },
+                            angleLines: { color: 'rgba(255,255,255,0.08)' },
+                            pointLabels: { color: '#cbd5e1', font: { family: 'Inter', size: 11 } }
+                        }
+                    },
+                    plugins: {
+                        legend: { labels: { color: '#94a3b8', font: { size: 10 } } }
+                    }
+                }
+            });
+
+            const ctxRisk = document.getElementById('riskChart').getContext('2d');
+            if (riskChartInstance) riskChartInstance.destroy();
+
+            riskChartInstance = new Chart(ctxRisk, {
+                type: 'bar',
+                data: {
+                    labels: ['Дефицит Vit D', 'Дефицит Ферритина', 'Истощение Mg / B', 'Циркадный сбой', 'Эмоц. выгорание'],
+                    datasets: [{
+                        label: 'Вероятность (%)',
+                        data: riskProbs,
+                        backgroundColor: riskProbs.map(p => p >= 70 ? '#f43f5e' : p >= 45 ? '#f59e0b' : '#10b981'),
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { min: 0, max: 100, grid: { color: 'rgba(255,255,255,0.06)' }, ticks: { color: '#94a3b8', font: { family: 'JetBrains Mono', size: 10 } } },
+                        y: { grid: { display: false }, ticks: { color: '#e2e8f0', font: { family: 'Inter', size: 11 } } }
+                    },
+                    plugins: {
+                        legend: { display: false }
+                    }
+                }
+            });
+        }
+
+        function generateQuintessence(data) {
+            const immList = document.getElementById('immediateActionsList');
+            const longList = document.getElementById('longTermActionsList');
+            const checklistEl = document.getElementById('checklistContainer');
+            const medEl = document.getElementById('medicalRecsContainer');
+            const relocEl = document.getElementById('relocationRecsContainer');
+            const verdictBadge = document.getElementById('overallVerdictBadge');
+            const motivEl = document.getElementById('motivationalSummary');
+
+            if (data.vitality >= 78) {
+                verdictBadge.innerText = 'Статус: Высокий ресурс и баланс';
+                verdictBadge.className = 'text-xs font-mono px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-300 border border-emerald-500/30';
+            } else if (data.vitality >= 58) {
+                verdictBadge.innerText = 'Статус: Точечная настройка приоритетов';
+                verdictBadge.className = 'text-xs font-mono px-2.5 py-1 rounded-lg bg-amber-500/20 text-amber-300 border border-amber-500/30';
+            } else {
+                verdictBadge.innerText = 'Статус: Нужна разгрузка и восстановление';
+                verdictBadge.className = 'text-xs font-mono px-2.5 py-1 rounded-lg bg-rose-500/20 text-rose-300 border border-rose-500/30';
+            }
+
+            // 1. Immediate Actions
+            const immediate = [];
+            if (data.sleep < 7.0) {
+                immediate.push(`<li><strong>Вернуть базовый сон (${data.sleep} ч $\rightarrow$ 7.5 ч):</strong> сместить отбой на 40 мин раньше, убрать синий свет за 1 час до сна.</li>`);
+            }
+            if (data.daylight < 8.5) {
+                immediate.push(`<li><strong>Компенсация светового голода (${data.lat}° с.ш.):</strong> 20–30 мин яркого утреннего света в первые 45 мин после пробуждения для запуска кортизол-серотонинового цикла.</li>`);
+            }
+            if (data.protDeficit > 20 || data.fiberDeficit) {
+                immediate.push(`<li><strong>Белково-овощной якорь:</strong> добавить +${Math.max(20, data.protDeficit)} г чистого белка и довести овощи до 400 г/день для стабилизации глюкозы и сытости.</li>`);
+            }
+            if (data.relSat <= 5 || data.sexFreq <= 2) {
+                immediate.push(`<li><strong>Эмоциональная и тактильная разгрузка:</strong> снизить изоляцию — запланировать 1 живую встречу/свидание или честный разговор о границах в ближайшие 7 дней.</li>`);
+            }
+            if (immediate.length === 0) {
+                immediate.push(`<li><strong>Закрепление режима:</strong> ваши базовые показатели в зеленой зоне — сфокусируйтесь на прогрессии в тренировках и глубокой работе.</li>`);
+            }
+            immList.innerHTML = immediate.slice(0, 3).join('');
+
+            // 2. Long-Term Strategy
+            const longTerm = [];
+            if (data.goal === 'lose' && data.bmi > 24.5) {
+                longTerm.push(`<li><strong>Плавная рекомпозиция тела:</strong> снижение веса темпом 0.4–0.6 кг/нед без жестких диет с акцентом на силовые тренировки 3 раза/нед.</li>`);
+            }
+            if (data.currInc < data.desInc * 0.85) {
+                longTerm.push(`<li><strong>Финансовый рычаг (+${Math.round((data.desInc/data.currInc - 1)*100)}% к доходу):</strong> монетизация текущих компетенций или переход в более маржинальный трек за 6–9 месяцев.</li>`);
+            }
+            if (data.kidsAge === 'teen') {
+                longTerm.push(`<li><strong>Навигация подросткового периода:</strong> делегирование части учебной рутины (репетиторы/менторы), снижение гиперконтроля и сохранение личного пространства.</li>`);
+            } else if (data.kidsAge === 'toddler') {
+                longTerm.push(`<li><strong>Делегирование быта с малышом:</strong> высвобождение минимум 6 часов в неделю исключительно на личное восстановление.</li>`);
+            }
+            if (data.lat >= 55 && data.daylight < 9) {
+                longTerm.push(`<li><strong>Стратегия зимовки или релокации:</strong> планирование переезда или длительной зимовки в регионы 34°–45° с.ш. для радикального улучшения качества жизни.</li>`);
+            }
+            if (longTerm.length === 0) {
+                longTerm.push(`<li><strong>Масштабирование капитала здоровья и финансов:</strong> инвестиции в долголетие (VO2 max, мышечная масса) и пассивные источники дохода.</li>`);
+            }
+            longList.innerHTML = longTerm.slice(0, 3).join('');
+
+            // 3. 21-Day Interactive Checklist
+            const tasks = [
+                { id: 't1', text: 'Сон не менее 7.5 часов в стабильное окно (отбой до 23:30)' },
+                { id: 't2', text: `Дневная порция: ${document.getElementById('macroProtein').innerText} белка и 400г овощей` },
+                { id: 't3', text: data.lat > 52 ? 'Утренний свет 20 мин + прием Vit D3 и Магния' : 'Утренняя прогулка 7 500+ шагов на свежем воздухе' },
+                { id: 't4', text: data.partnerStatus === 'partner' ? '1 качественный вечер с партнером без гаджетов в неделю' : 'Выйти в люди: 1 новое социальное знакомство или встреча в неделю' },
+                { id: 't5', text: '3 целевые тренировки в неделю + 10 мин вечернего дыхания для снижения кортизола' }
+            ];
+
+            checklistEl.innerHTML = tasks.map(t => {
+                const checked = completedChecklistItems.has(t.id);
+                return `
+                    <label onclick="toggleCheck('${t.id}')" class="flex items-start gap-2.5 p-2.5 rounded-xl border ${checked ? 'bg-emerald-950/30 border-emerald-500/40 text-emerald-200' : 'bg-slate-900/90 border-slate-800 text-slate-300'} cursor-pointer hover:border-slate-700 transition select-none">
+                        <input type="checkbox" ${checked ? 'checked' : ''} class="mt-0.5 rounded bg-slate-800 border-slate-600 text-emerald-500 pointer-events-none">
+                        <span class="${checked ? 'line-through opacity-75' : ''}">${t.text}</span>
+                    </label>
+                `;
+            }).join('');
+            document.getElementById('checklistProgress').innerText = `${completedChecklistItems.size} / ${tasks.length} выполнено`;
+
+            // 4. Doctors, Labs & Nutrients
+            let medHtml = `<p><strong class="text-sky-300">К каким врачам обратиться:</strong> Терапевт / врач превентивной медицины`;
+            if (data.probVitD > 60 || !data.tshUnknown) medHtml += `, Эндокринолог`;
+            if (gender === 'F' && document.getElementById('cycleStatus').value !== 'regular') medHtml += `, Гинеколог-эндокринолог`;
+            if (gender === 'M' && document.getElementById('erectionStatus').value !== 'normal') medHtml += `, Андролог / Уролог`;
+            medHtml += `.</p>`;
+
+            const labsToOrder = [];
+            if (data.vitDUnknown || data.probVitD > 50) labsToOrder.push('25(OH) Витамин D');
+            if (data.ferrUnknown || data.probFerritin > 45) labsToOrder.push('Ферритин + ОАК');
+            if (data.tshUnknown) labsToOrder.push('ТТГ, Т4 св.');
+            if (data.glucUnknown || data.bmi > 26) labsToOrder.push('Глюкоза, Инсулин (HOMA-IR)');
+            if (data.allostaticLoad > 55) labsToOrder.push('Кортизол слюны / СРБ');
+
+            medHtml += `<p><strong class="text-sky-300">Чек-ап анализов:</strong> ${labsToOrder.length ? labsToOrder.join(', ') : 'Базовый ежегодный скрининг (ОАК, биохимия)'}.</p>`;
+            medHtml += `<p><strong class="text-emerald-300">Нутрицевтики (после консультации):</strong> Vit D3 (${data.probVitD > 70 ? '4000–5000 МЕ' : '2000 МЕ'}) + K2 утром с жирами, Магний бисглицинат 400 мг вечером, Омега-3 (1000 мг EPA+DHA).</p>`;
+            medEl.innerHTML = medHtml;
+
+            // 5. Astro-Relocation Top 3 Locations
+            let topLocations = [];
+            if (data.astro.element === 'Земля' || data.astro.element === 'Вода') {
+                topLocations = [
+                    { city: 'Лимасол / Пафос (Кипр, 34.7° с.ш.)', reason: '320+ солнечных дней в году, мягкий средиземноморский климат снижает кортизол, сильный биотех/IT кластер и гармония со стихией Земли/Воды.' },
+                    { city: 'Аликанте / Валенсия (Испания, 38.3°–39.4° с.ш.)', reason: 'Идеальный баланс светового дня, чистый морской воздух (AQI < 25), высокая социальная открытость.' },
+                    { city: 'Бухарест / Брашов (Румыния, 44.4°–45.6° с.ш.)', reason: 'Близкий культурный и языковой контур, растущий фармацевтический рынок ЕС и умеренно-мягкий климат.' }
+                ];
+            } else {
+                topLocations = [
+                    { city: 'Барселона / Малага (Испания, 36.7°–41.3° с.ш.)', reason: 'Динамичная среда для стихии Огня/Воздуха, обилие солнца и высокий нетворкинг-потенциал.' },
+                    { city: 'Сочи / Красная Поляна (43.6° с.ш.)', reason: 'Максимум солнечных дней и горно-морской ионизированный воздух без смены языковой среды.' },
+                    { city: 'Лиссабон / Кашкайш (Португалия, 38.7° с.ш.)', reason: 'Океанический бриз, свежий воздух, сильное международное комьюнити и антистресс-ритм.' }
+                ];
+            }
+
+            relocEl.innerHTML = topLocations.map((loc, idx) => `
+                <div class="bg-slate-950/70 p-2.5 rounded-lg border border-slate-800/80">
+                    <strong class="text-violet-300 block">${idx + 1}. ${loc.city}</strong>
+                    <span class="text-[11px] text-slate-400">${loc.reason}</span>
+                </div>
+            `).join('');
+
+            // 6. Motivational Summary
+            motivEl.innerText = `Ваш текущий интегральный ресурс составляет ${data.vitality}%. Помните главный статистический принцип: система меняется не через резкие запреты, а через смещение средних значений. Начните с микро-шагов на 21 день — выровняйте сон, добавьте дневной свет и качественный белок. Каждое выполненное действие из чек-листа снижает аллостатическую нагрузку и высвобождает энергию для ваших главных целей!`;
+        }
+
+        function toggleCheck(id) {
+            if (completedChecklistItems.has(id)) {
+                completedChecklistItems.delete(id);
+            } else {
+                completedChecklistItems.add(id);
+            }
+            recalculateAll();
+        }
+
+        window.onload = init;
+    </script>
+</body>
+</html>
